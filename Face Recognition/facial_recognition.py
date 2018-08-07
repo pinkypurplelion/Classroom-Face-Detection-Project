@@ -9,6 +9,7 @@ USERS = {}
 
 SEVER_URL = "http://192.168.0.55:3000/"
 
+
 def send_user_data_to_server(server_url, post_data):
     r = requests.post(server_url, data=post_data)
 
@@ -22,6 +23,7 @@ def update_users_dictionary():
             USERS[foo[0]] = foo[1]
 
     print(USERS)
+
 
 update_users_dictionary()
 
@@ -59,6 +61,8 @@ def save_face():
     _thread.start_new_thread(process_image_with_azure, tuple([img_location, "detected_faces"]))
     #_thread.start_new_thread(add_user_to_face_list, tuple(["eperak.jpg", "detected_faces", "Ema Perak"]))
 
+    print("DEBUG: save_face")
+
     saved_faces += 1
     saved = True
 
@@ -75,7 +79,8 @@ def process_image_with_azure(image_path: str, face_list: str):
     if results[3] == True:
         print("Welcome",USERS[results[2]])
 
-    send_user_data_to_server(SEVER_URL, {"user":USERS[results[2]]})
+    print("DEBUG: process_image_with_azure")
+    #send_user_data_to_server(SEVER_URL, {"user":USERS[results[2]]})
 
     #CF.face_list.delete_face("detected_faces", "15b83ffe-6244-424f-808f-1779d018c5da")
     #print(CF.face_list.add_face('face_0.jpg', 'detected_faces'))
@@ -104,6 +109,7 @@ def find_similar_face(image_path: str, face_list: str) -> list:
     print("Detecting Similar Faces Using Microsoft Azure")
 
     return_data = CF.face.detect(image_path)
+    print(return_data)
     face_id = return_data[0]['faceId']
     print("Face Detected. Face ID: "+str(face_id))
 
@@ -133,6 +139,7 @@ def add_user_to_face_list(user_image_path: str, face_list: str, user_name: str) 
 
     return perm_id
 
+
 while True:
     global frame
     # Capture frame-by-frame
@@ -158,9 +165,9 @@ while True:
     if len(faces) == 1:
         if not running:
             saved = False
-            print("Saving Image in 3 Seconds")
+            print("Saving Image in 5 Seconds")
             running = True
-            t = Timer(3.0, save_face)
+            t = Timer(5.0, save_face)
             t.start()
 
     if len(faces) != 1:
