@@ -1,4 +1,4 @@
 import _thread
 
-if __name__ == '__main__':
-    print("Test")
+def main():
+    print("Main Code Loop")

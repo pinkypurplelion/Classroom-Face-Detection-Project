@@ -50,7 +50,7 @@ def save_face():
     print("Image Saved")
 
     _thread.start_new_thread(process_image_with_azure, tuple([img_location, "detected_faces"]))
-    #_thread.start_new_thread(add_user_to_face_list, tuple([img_location, "detected_faces", "Tanya Angus"]))
+    #_thread.start_new_thread(add_user_to_face_list, tuple(["eperak.jpg", "detected_faces", "Ema Perak"]))
 
     saved_faces += 1
     saved = True
@@ -149,9 +149,9 @@ while True:
     if len(faces) == 1:
         if not running:
             saved = False
-            print("Saving Image in 5 Seconds")
+            print("Saving Image in 3 Seconds")
             running = True
-            t = Timer(5.0, save_face)
+            t = Timer(3.0, save_face)
             t.start()
 
     if len(faces) != 1:
