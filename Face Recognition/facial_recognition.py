@@ -5,6 +5,8 @@ import cognitive_face as CF
 import json
 import requests
 
+box_expander = 50
+
 USERS = {}
 
 SEVER_URL = "http://192.168.0.55:3000/"
@@ -53,9 +55,14 @@ def add_face_to_list(image_location, face_list):
 
 
 def save_face():
-    global saved, saved_faces, frame
-    img_location = "face_"+str(saved_faces)+".jpg"
-    cv2.imwrite(img_location, frame)
+    global saved, saved_faces, frame, _x, _y, _w, _h
+
+    sub_face = frame[_y - box_expander:_y + _h + box_expander, _x - box_expander:_x + _w + box_expander]
+    img_location = "face_" + str(saved_faces) + ".jpg"
+    cv2.imwrite(img_location, sub_face)
+
+    # img_location = "face_"+str(saved_faces)+".jpg"
+    # cv2.imwrite(img_location, frame)
     print("Image Saved")
 
     _thread.start_new_thread(process_image_with_azure, tuple([img_location, "detected_faces"]))
@@ -141,7 +148,7 @@ def add_user_to_face_list(user_image_path: str, face_list: str, user_name: str) 
 
 
 while True:
-    global frame
+    global frame, _x, _y, _w, _h
     # Capture frame-by-frame
     ret, frame = video_capture.read()
 
@@ -152,12 +159,14 @@ while True:
         gray,
         scaleFactor=1.2,
         minNeighbors=5,
-        minSize=(30, 30)
+        minSize=(100, 100)
     )
+
 
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
         cv2.rectangle(drawn_frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        _x, _y, _w, _h = faces[0][0], faces[0][1], faces[0][2], faces[0][3]
 
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(drawn_frame, "Welcome "+FACE_USER, (20, 400), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
@@ -165,9 +174,9 @@ while True:
     if len(faces) == 1:
         if not running:
             saved = False
-            print("Saving Image in 5 Seconds")
+            print("Saving Image in 2 Seconds")
             running = True
-            t = Timer(5.0, save_face)
+            t = Timer(2.0, save_face)
             t.start()
 
     if len(faces) != 1:

@@ -2,8 +2,8 @@
   "name": "Classroom-Face-Detection-Project",
   "version": "0.0.1",
   "dependencies": {
-    "body-parser": "latest",
-    "socket.io": "^2.1.1",
-    "express": "latest"
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "socket.io": "^2.1.1"
   }
 }
