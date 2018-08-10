@@ -87,7 +87,7 @@ def process_image_with_azure(image_path: str, face_list: str):
         print("Welcome",USERS[results[2]])
 
     print("DEBUG: process_image_with_azure")
-    #send_user_data_to_server(SEVER_URL, {"user":USERS[results[2]]})
+    send_user_data_to_server(SEVER_URL, {"user":USERS[results[2]]})
 
     #CF.face_list.delete_face("detected_faces", "15b83ffe-6244-424f-808f-1779d018c5da")
     #print(CF.face_list.add_face('face_0.jpg', 'detected_faces'))
