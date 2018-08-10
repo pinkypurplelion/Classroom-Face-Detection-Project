@@ -44,7 +44,8 @@ app.get('/test', function (req, res) {
 app.post('/', function (req, res) {
     res.send('Got a POST request');
     console.log("Received POST Request");
-    console.log(req.body.user);
+    console.log(req.body);
+    console.log(req.body.user, req.body.userID, req.body.faceAttributes, req.body.smile);
     user = req.body.user;
     io.emit('chat message', user);
 });
