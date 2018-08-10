@@ -1,10 +1,15 @@
+// The main server file handling all requests for the public facing web server
+
 var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var bodyParser = require('body-parser');
+var dbio = require('./dbio');
 
 server.listen(3000);
+console.log("Sever listening on port 3000 (192.168.0.55:3000)");
+
 
 var user = "";
 
@@ -25,7 +30,11 @@ io.on('connection', function (socket) {
 });
 
 app.get('/', function (req, res) {
-    res.render('index', { users: user});
+    dbio.getUserData("52376f94-5e9f-48c3-852c-a59f43a898ac", function (_user) {
+        res.render('index', { users: _user});
+        console.log("User: " + _user);
+    });
+
 });
 
 app.get('/test', function (req, res) {
