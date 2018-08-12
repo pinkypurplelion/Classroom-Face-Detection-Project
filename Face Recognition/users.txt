@@ -2,3 +2,5 @@
 ae9b3c94-13ec-4765-92e9-113f26a38eb8,Mayghyn Angus
 8a8e392b-4877-4cf5-8c1e-873bb6af2b00,Donald Trump
 350cdf66-5c89-4936-976d-3e593086eaf0,Tanya Angus
+95c0ba88-86e1-48b5-b848-4ad3125c3093,Kerry Angus
+21228979-f589-4aa5-970d-98ab7413f6cf,John Angus
