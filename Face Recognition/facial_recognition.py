@@ -1,33 +1,15 @@
 from threading import Timer
+from functions import send_user_data_to_server, update_users_dictionary
 import _thread
 import cv2
 import cognitive_face as CF
 import json
 import requests
+import os
 
 box_expander = 50
-
 USERS = {}
-
 SEVER_URL = "http://192.168.0.55:3000/"
-
-
-def send_user_data_to_server(server_url, post_data):
-    r = requests.post(server_url, data=post_data)
-
-
-def update_users_dictionary():
-    global USERS
-
-    with open("users.txt", "r") as f:
-        for line in f:
-            foo = line.strip().split(",")
-            USERS[foo[0]] = foo[1]
-
-    print(USERS)
-
-
-update_users_dictionary()
 
 
 FACE_USER = ""
@@ -50,7 +32,10 @@ saved = False
 running = False
 
 
-def add_face_to_list(image_location, face_list):
+USERS = update_users_dictionary(USERS)
+
+
+def add_face_to_lists(image_location, face_list):
     return CF.face_list.add_face(image_location, face_list)
 
 
@@ -58,7 +43,7 @@ def save_face():
     global saved, saved_faces, frame, _x, _y, _w, _h
 
     sub_face = frame[_y - box_expander:_y + _h + box_expander, _x - box_expander:_x + _w + box_expander]
-    img_location = "face_" + str(saved_faces) + ".jpg"
+    img_location = os.path.join("images", "face_" + str(saved_faces) + ".jpg")
     cv2.imwrite(img_location, sub_face)
 
     # img_location = "face_"+str(saved_faces)+".jpg"
@@ -66,7 +51,7 @@ def save_face():
     print("Image Saved")
 
     _thread.start_new_thread(process_image_with_azure, tuple([img_location, "detected_faces"]))
-    #_thread.start_new_thread(add_user_to_face_list, tuple(["eperak.jpg", "detected_faces", "Ema Perak"]))
+    #_thread.start_new_thread(add_user_to_face_list, tuple(["images\grandad_cropped.jpg", "detected_faces", "John Angus"]))
 
     print("DEBUG: save_face")
 
@@ -76,9 +61,11 @@ def save_face():
 
 def process_image_with_azure(image_path: str, face_list: str):
     print("Processing Image")
-    data = find_similar_face(image_path, face_list)
+    data, face_attributes = find_similar_face(image_path, face_list)
 
     print("Similar Faces Data:",data)
+    print("Face Attribute Data:",face_attributes)
+
 
     results = process_similar_face_data(data)
     print(results)
@@ -87,12 +74,26 @@ def process_image_with_azure(image_path: str, face_list: str):
         print("Welcome",USERS[results[2]])
 
     print("DEBUG: process_image_with_azure")
-    send_user_data_to_server(SEVER_URL, {"user":USERS[results[2]], "userID":results[2]})
+    send_user_data_to_server(SEVER_URL, {"user":USERS[results[2]], "userID":results[2], "faceAttributes":face_attributes})
 
     #CF.face_list.delete_face("detected_faces", "15b83ffe-6244-424f-808f-1779d018c5da")
     #print(CF.face_list.add_face('face_0.jpg', 'detected_faces'))
     #CF.face_list.create("detected_faces", "Detected Faces")
 
+def find_similar_face(image_path: str, face_list: str) -> list:
+    print("Detecting Similar Faces Using Microsoft Azure")
+
+    return_data = CF.face.detect(image_path, attributes="age,gender,headPose,smile,facialHair,glasses,emotion,makeup,accessories")
+    # print(return_data)
+    face_id = return_data[0]['faceId']
+    face_attributes = return_data[0]['faceAttributes']
+    print("Face Detected. Face ID: "+str(face_id))
+    # print(face_attributes)
+
+    similar_faces = CF.face.find_similars(face_id, face_list)
+    print("Similar Faces Found")
+
+    return similar_faces, face_attributes
 
 def process_similar_face_data(similar_faces_data: list) -> list:
     global FACE_ACCEPTED, FACE_CONFIDENCE, FACE_USER
@@ -111,19 +112,6 @@ def process_similar_face_data(similar_faces_data: list) -> list:
     else:
         return ["Face Has Not Been Detected", confidence, persistedID, False]
 
-
-def find_similar_face(image_path: str, face_list: str) -> list:
-    print("Detecting Similar Faces Using Microsoft Azure")
-
-    return_data = CF.face.detect(image_path)
-    print(return_data)
-    face_id = return_data[0]['faceId']
-    print("Face Detected. Face ID: "+str(face_id))
-
-    similar_faces = CF.face.find_similars(face_id, face_list)
-    print("Similar Faces Found")
-
-    return similar_faces
 
 
 def add_user_to_face_list(user_image_path: str, face_list: str, user_name: str) -> str:
@@ -174,9 +162,9 @@ while True:
     if len(faces) == 1:
         if not running:
             saved = False
-            print("Saving Image in 2 Seconds")
+            print("Saving Image in 1 Seconds")
             running = True
-            t = Timer(2.0, save_face)
+            t = Timer(1.0, save_face)
             t.start()
 
     if len(faces) != 1:
