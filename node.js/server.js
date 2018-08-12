@@ -6,17 +6,15 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var bodyParser = require('body-parser');
 var dbio = require('./dbio');
+var template_helper = require('./template_helper');
+
 
 server.listen(3000);
 console.log("Sever listening on port 3000 (192.168.0.55:3000)");
 
 
-var user = "";
-
-
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-app.set('view engine', 'pug');
 
 
 app.get('/messages', function (req, res) {
@@ -31,8 +29,15 @@ io.on('connection', function (socket) {
 
 app.get('/', function (req, res) {
     dbio.getUserData("52376f94-5e9f-48c3-852c-a59f43a898ac", function (_user) {
-        res.render('index', { users: _user});
+        //res.render('index', { users: _user});
         console.log("User: " + _user);
+        var user = _user;
+
+        template_helper.parseTemplate("index", {user: _user, body: "BODY"}, function (data) {
+            res.writeHeader(200, {"Content-Type": "text/html"});
+            res.write(data);
+            res.end();
+        });
     });
 
 });
