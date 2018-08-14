@@ -15,6 +15,7 @@ console.log("Sever listening on port 3000 (192.168.0.55:3000)");
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+app.use(express.static(__dirname + '/static'));
 
 
 app.get('/messages', function (req, res) {
