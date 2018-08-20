@@ -9,7 +9,7 @@ import os
 
 box_expander = 50
 USERS = {}
-SEVER_URL = "http://192.168.0.55:3000/"
+SEVER_URL = "http://localhost:3000/"
 
 
 FACE_USER = ""
