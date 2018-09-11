@@ -50,7 +50,7 @@ def save_face():
     # cv2.imwrite(img_location, frame)
     print("Image Saved")
 
-    _thread.start_new_thread(process_image_with_azure, tuple([img_location, "detected_faces"]))
+    _thread.start_new_thread(process_image_with_azure, tuple([img_location, "secstudents"]))
     #_thread.start_new_thread(add_user_to_face_list, tuple(["images\grandad_cropped.jpg", "detected_faces", "John Angus"]))
 
     print("DEBUG: save_face")
@@ -129,7 +129,7 @@ def add_user_to_face_list(user_image_path: str, face_list: str, user_name: str) 
     print("User Successfully Added to USERS List")
 
     print("Updating Dictionary")
-    update_users_dictionary()
+    update_users_dictionary(USERS)
     print("Dictionary Updated")
 
     return perm_id
