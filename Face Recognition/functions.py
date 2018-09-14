@@ -15,9 +15,6 @@ def update_users_dictionary(USERS):
     return USERS
 
 
-def identify_tracked_face():
-    return 0
-
 def rect_mean_pos(x, y, w, h) -> (float, float):
     return ((x+(w/2)),(y+(h/2)))
 
@@ -49,4 +46,9 @@ def find_face_tracker_with_pos(old_pos, trackers):
         _x, _y = trackers[i].current_mean_pos
         _m = (_x ** 2 + _y ** 2) ** (1/2)
         if old_pos == _m:
+            return i
+
+def find_tracker_with_id(tracker_id, trackers):
+    for i in range(len(trackers)):
+        if trackers[i].tracker_id == tracker_id:
             return i

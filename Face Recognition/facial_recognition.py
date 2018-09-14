@@ -1,5 +1,5 @@
 from threading import Timer
-from functions import send_user_data_to_server, update_users_dictionary, tracker_id_generator, rect_mean_pos, find_closest, update_face_tracker
+from functions import send_user_data_to_server, update_users_dictionary, tracker_id_generator, rect_mean_pos, find_closest, update_face_tracker, find_tracker_with_id
 import _thread
 import cv2
 import cognitive_face as CF
@@ -7,6 +7,8 @@ import json
 import requests
 import os
 from tracked_face import TrackedFace
+import time
+import copy
 
 
 GENERATED_TRACKER_IDS = []
@@ -29,7 +31,7 @@ CF.BaseUrl.set(BASE_URL)
 cascPath = "haarcascade_frontalface_default.xml"
 faceCascade = cv2.CascadeClassifier(cascPath)
 # "videos/multi_face_test_video.mp4"
-video_capture = cv2.VideoCapture(0)
+video_capture = cv2.VideoCapture("videos/multi_face_test_video.mp4")
 
 saved_faces = 0
 saved = False
@@ -47,27 +49,24 @@ def add_face_to_lists(image_location, face_list):
     return CF.face_list.add_face(image_location, face_list)
 
 
-def save_face():
-    global saved, saved_faces, frame, _x, _y, _w, _h
+def save_face(face_tracker_id, x, y):
+    global saved, saved_faces, frame
 
-    sub_face = frame[_y - box_expander:_y + _h + box_expander, _x - box_expander:_x + _w + box_expander]
-    img_location = os.path.join("images", "face_" + str(saved_faces) + ".jpg")
+    sub_face = frame[y-300:y+300, x-300:x+300]
+    img_location = os.path.join("images", "face_" + str(face_tracker_id) + ".jpg")
     cv2.imwrite(img_location, sub_face)
 
-    # img_location = "face_"+str(saved_faces)+".jpg"
-    # cv2.imwrite(img_location, frame)
-    print("Image Saved")
+    print("Image Saved:",face_tracker_id)
 
-    _thread.start_new_thread(process_image_with_azure, tuple([img_location, "secstudents"]))
+    _thread.start_new_thread(process_image_with_azure, tuple([img_location, "secstudents", face_tracker_id]))
     #_thread.start_new_thread(add_user_to_face_list, tuple(["images\grandad_cropped.jpg", "detected_faces", "John Angus"]))
 
-    print("DEBUG: save_face")
 
     saved_faces += 1
     saved = True
 
 
-def process_image_with_azure(image_path: str, face_list: str):
+def process_image_with_azure(image_path: str, face_list: str, face_tracker_id: float):
     print("Processing Image")
     data, face_attributes = find_similar_face(image_path, face_list)
 
@@ -78,6 +77,13 @@ def process_image_with_azure(image_path: str, face_list: str):
     results = process_similar_face_data(data)
     print(results)
 
+    tracked_face = TRACKED_FACES[find_tracker_with_id(face_tracker_id, TRACKED_FACES)]
+    tracked_face.face_attribute_data = face_attributes
+    tracked_face.face_id = results[2]
+    if len(results[2]) != 0:
+        tracked_face.face_name = USERS[results[2]]
+
+    # print("RESULTS",results)
     if results[3] == True:
         print("Welcome",USERS[results[2]])
 
@@ -149,10 +155,11 @@ while True:
 
 
     global frame, _x, _y, _w, _h
+    font = cv2.FONT_HERSHEY_SIMPLEX
     # Capture frame-by-frame
     ret, frame = video_capture.read()
 
-    drawn_frame = frame
+    drawn_frame = copy.copy(frame)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     faces = faceCascade.detectMultiScale(
@@ -169,7 +176,9 @@ while True:
             cv2.rectangle(drawn_frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
             _x, _y, _w, _h = faces[0][0], faces[0][1], faces[0][2], faces[0][3]
             t_id = tracker_id_generator(GENERATED_TRACKER_IDS)
-            face_track = TrackedFace(rect_mean_pos(x, y, w, h), t_id)
+            # print("TRACKER ID:",t_id)
+            face_track = TrackedFace(rect_mean_pos(x, y, w, h), t_id, time.time())
+            print("t_id:",face_track.tracker_id)
             TRACKED_FACES.append(face_track)
             print(TRACKED_FACES)
             _mx, _my = face_track.current_mean_pos
@@ -200,11 +209,11 @@ while True:
     for pos in new_mean_pos:
         _fx, _fy = pos
         _fm = (_fx ** 2 + _fy ** 2) ** (1/2)
-        print("_fm: ", _fm)
+        # print("_fm: ", _fm)
 
-        print("_dma", _dma)
+        # print("_dma", _dma)
         x = find_closest(_fm, _dma)
-        print("X BEFORE REMOVAL: ", x)
+        # print("X BEFORE REMOVAL: ", x)
         if x != -1:
             _dma.remove(x)
             TRACKED_FACES = update_face_tracker(x, pos, TRACKED_FACES)
@@ -212,18 +221,20 @@ while True:
 
     for face in TRACKED_FACES:
         _mx, _my = face.current_mean_pos
-        cv2.line(drawn_frame, (int(_mx), int(_my)), (int(_mx), int(_my)), (64, 128, 96), 3)
-    # if len(TRACKED_FACES) < len(faces):
+        _mx, _my = int(_mx), int(_my)
 
+        cv2.line(drawn_frame, (_mx, _my), (_mx, _my), (64, 128, 96), 10)
+        cv2.putText(drawn_frame, str(face.face_name), (_mx, _my-100), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+        if time.time() - face.identified_at >= 3 and face.captured == False:
+            print("3 Seconds elapsed, capturing and identifying face.")
+            face.captured = True
+            save_face(face.tracker_id, _mx, _my)
 
 
 
     for face in TRACKED_FACES:
         if face.currently_tracked == False:
             TRACKED_FACES.remove(face)
-
-    # font = cv2.FONT_HERSHEY_SIMPLEX
-    # cv2.putText(drawn_frame, "Welcome "+FACE_USER, (20, 400), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
 
 
