@@ -31,7 +31,7 @@ CF.BaseUrl.set(BASE_URL)
 cascPath = "haarcascade_frontalface_default.xml"
 faceCascade = cv2.CascadeClassifier(cascPath)
 # "videos/multi_face_test_video.mp4"
-video_capture = cv2.VideoCapture("videos/multi_face_test_video.mp4")
+video_capture = cv2.VideoCapture(0)
 
 saved_faces = 0
 saved = False
@@ -52,13 +52,14 @@ def add_face_to_lists(image_location, face_list):
 def save_face(face_tracker_id, x, y):
     global saved, saved_faces, frame
 
-    sub_face = frame[y-300:y+300, x-300:x+300]
+    sub_face = frame[y-150:y+150, x-150:x+150]
     img_location = os.path.join("images", "face_" + str(face_tracker_id) + ".jpg")
     cv2.imwrite(img_location, sub_face)
 
     print("Image Saved:",face_tracker_id)
 
-    _thread.start_new_thread(process_image_with_azure, tuple([img_location, "secstudents", face_tracker_id]))
+    # FACE-GROUP: secstudents
+    _thread.start_new_thread(process_image_with_azure, tuple([img_location, "detected_faces", face_tracker_id]))
     #_thread.start_new_thread(add_user_to_face_list, tuple(["images\grandad_cropped.jpg", "detected_faces", "John Angus"]))
 
 
@@ -148,6 +149,7 @@ def add_user_to_face_list(user_image_path: str, face_list: str, user_name: str) 
 
     return perm_id
 
+num_faces = 0
 
 while True:
     for face in TRACKED_FACES:

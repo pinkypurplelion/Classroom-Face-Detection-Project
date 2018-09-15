@@ -7,7 +7,7 @@ def send_user_data_to_server(server_url, post_data):
 
 
 def update_users_dictionary(USERS):
-    with open("faces.txt", "r") as f:
+    with open("users.txt", "r") as f:
         for line in f:
             foo = line.strip().split(",")
             USERS[foo[0]] = foo[1]
