@@ -1,20 +1,16 @@
-from threading import Timer
-from functions import send_user_data_to_server, update_users_dictionary, tracker_id_generator, rect_mean_pos, find_closest, update_face_tracker, find_tracker_with_id
+from functions import send_user_data_to_server, update_users_dictionary
+from datetime import datetime
 import _thread
 import cv2
 import cognitive_face as CF
-import json
-import requests
 import os
 import copy
 from pyimagesearch.centroidtracker import CentroidTracker
 
 
-GENERATED_TRACKER_IDS = []
-
-box_expander = 50
 USERS = {}
-SEVER_URL = "http://localhost:3000/"
+USER_DATA_POST_URL = "http://192.168.0.55:3002/post/user/identified"
+LOCATION_ID = "GH6JK30L"
 
 
 FACE_USER = ""
@@ -74,6 +70,7 @@ def process_image_with_azure(image_path: str, face_list: str, face_tracker_id: i
     print("Face Attribute Data:",face_attributes)
 
 
+
     results = process_similar_face_data(data)
     print(results)
 
@@ -85,6 +82,13 @@ def process_image_with_azure(image_path: str, face_list: str, face_tracker_id: i
 
     TRACKED_FACES.append({"objectID": face_tracker_id, "personName": USERS[results[2]], "personID": results[2]})
     print(TRACKED_FACES)
+
+    payload = {"userID": results[2],
+               "locationID": "GH6JK30L",
+               "timestamp": str(datetime.now()),
+               "faceAttributes":face_attributes}
+
+    send_user_data_to_server(USER_DATA_POST_URL, payload)
 
     #send_user_data_to_server(SEVER_URL, {"user":USERS[results[2]], "userID":results[2], "faceAttributes":face_attributes})
 
